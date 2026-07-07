@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from werkzeug.exceptions import BadRequest
-from app.services import GeminiService, VectorStore, DocumentProcessor
+from app.services import GeminiService, VectorStore, DocumentProcessor, SessionManager
 from app.utils import FileHandler
 from app.config import Config
 
@@ -9,6 +9,7 @@ bp = Blueprint('api', __name__, url_prefix='/api')
 gemini_service = GeminiService()
 vector_store = VectorStore()
 doc_processor = DocumentProcessor()
+session_manager = SessionManager()
 
 @bp.route('/upload', methods=['POST'])
 def upload_document():
@@ -42,44 +43,49 @@ def upload_document():
 def query_documents():
     try:
         data = request.get_json()
-        
+
         if not data or 'query' not in data:
             return jsonify({'error': 'Query is required'}), 400
-        
+
         query = data['query'].strip()
         if not query:
             return jsonify({'error': 'Query cannot be empty'}), 400
-        
+
+        session_id = data.get('session_id')
+        chat_session = session_manager.get_session(session_id) if session_id else None
+
         query_embedding = gemini_service.generate_query_embedding(query)
-        
+
         search_results = vector_store.search(query_embedding, Config.TOP_K_RESULTS)
-        
+
         if not search_results['documents']:
-            return jsonify({
-                'answer': 'No relevant documents found. Please upload documents first.',
-                'sources': []
-            }), 200
-        
-        answer = gemini_service.generate_response(query, search_results['documents'])
-        
-        sources = [
-            {
-                'text': doc,
-                'metadata': meta,
-                'similarity': 1 - dist
-            }
-            for doc, meta, dist in zip(
-                search_results['documents'],
-                search_results['metadatas'],
-                search_results['distances']
-            )
-        ]
-        
+            answer = 'No relevant documents found. Please upload documents first.'
+            sources = []
+        else:
+            answer = gemini_service.generate_response(query, search_results['documents'])
+            sources = [
+                {
+                    'text': doc,
+                    'metadata': meta,
+                    'similarity': 1 - dist
+                }
+                for doc, meta, dist in zip(
+                    search_results['documents'],
+                    search_results['metadatas'],
+                    search_results['distances']
+                )
+            ]
+
+        if chat_session:
+            chat_session.add_message('user', query)
+            chat_session.add_message('assistant', answer, sources)
+
         return jsonify({
             'answer': answer,
-            'sources': sources
+            'sources': sources,
+            'session_id': chat_session.session_id if chat_session else None
         }), 200
-        
+
     except Exception as e:
         return jsonify({'error': f'Query failed: {str(e)}'}), 500
 
@@ -89,6 +95,40 @@ def get_stats():
         count = vector_store.get_collection_count()
         return jsonify({
             'total_chunks': count
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/session/create', methods=['POST'])
+def create_session():
+    try:
+        session_id = session_manager.create_session()
+        return jsonify({
+            'session_id': session_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/session/<session_id>/history', methods=['GET'])
+def get_session_history(session_id):
+    try:
+        chat_session = session_manager.get_session(session_id)
+        limit = request.args.get('limit', type=int)
+        history = chat_session.get_history(limit)
+        return jsonify({
+            'session_id': session_id,
+            'history': history
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/session/<session_id>/clear', methods=['DELETE'])
+def clear_session(session_id):
+    try:
+        chat_session = session_manager.get_session(session_id)
+        chat_session.clear_history()
+        return jsonify({
+            'message': 'Session history cleared'
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
