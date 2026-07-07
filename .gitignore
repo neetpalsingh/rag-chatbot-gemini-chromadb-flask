@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+.md
+*.md
+
+skills-lock.json
+
+uploads/
+chroma_db/
+*.db
