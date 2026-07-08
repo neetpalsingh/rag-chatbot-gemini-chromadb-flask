@@ -1,0 +1,97 @@
+import logging
+import uuid
+from pathlib import Path
+from services.embedding_service import GeminiEmbeddingService
+from services.chunk_service import ChunkService
+from database.chroma_client import ChromaManager
+from utils.pdf_reader import PDFReader
+from utils.text_reader import TextReader
+
+logger = logging.getLogger(__name__)
+
+class DocumentIngestionService:
+    """
+    Service for ingesting documents into the vector database.
+    Orchestrates reading, chunking, embedding, and storage.
+    """
+    
+    def __init__(
+        self,
+        embedding_service: GeminiEmbeddingService,
+        chunk_service: ChunkService,
+        chroma_manager: ChromaManager
+    ):
+        """
+        Initialize ingestion service with dependencies.
+        
+        Args:
+            embedding_service: Service for generating embeddings
+            chunk_service: Service for chunking documents
+            chroma_manager: ChromaDB manager
+        """
+        self.embedding_service = embedding_service
+        self.chunk_service = chunk_service
+        self.chroma_manager = chroma_manager
+        self.pdf_reader = PDFReader()
+        self.text_reader = TextReader()
+        logger.info('Document ingestion service initialized')
+    
+    def process_document(self, file_path: Path) -> dict:
+        """
+        Process a document end-to-end: read, chunk, embed, store.
+        
+        Args:
+            file_path: Path to the uploaded document
+            
+        Returns:
+            dict: Processing results with chunk count and filename
+        """
+        try:
+            text = self._read_document(file_path)
+            
+            chunks, metadatas = self.chunk_service.create_chunks(
+                text=text,
+                filename=file_path.name
+            )
+            
+            if not chunks:
+                raise ValueError("No chunks created from document")
+            
+            embeddings = self.embedding_service.generate_batch_embeddings(chunks)
+            
+            ids = self._generate_chunk_ids(file_path.name, len(chunks))
+            
+            self.chroma_manager.add_documents(
+                documents=chunks,
+                embeddings=embeddings,
+                metadatas=metadatas,
+                ids=ids
+            )
+            
+            logger.info(f'Successfully processed {file_path.name}: {len(chunks)} chunks')
+            
+            return {
+                'filename': file_path.name,
+                'chunks_count': len(chunks),
+                'success': True
+            }
+            
+        except Exception as e:
+            logger.exception(f'Failed to process document {file_path.name}: {e}')
+            raise
+    
+    def _read_document(self, file_path: Path) -> str:
+        """Read document based on file extension."""
+        extension = file_path.suffix.lower()
+        
+        if extension == '.pdf':
+            return self.pdf_reader.read_pdf(file_path)
+        elif extension == '.txt':
+            return self.text_reader.read_text(file_path)
+        else:
+            raise ValueError(f"Unsupported file type: {extension}")
+    
+    def _generate_chunk_ids(self, filename: str, chunk_count: int) -> list[str]:
+        """Generate unique IDs for chunks."""
+        unique_id = str(uuid.uuid4())[:8]
+        return [f"{filename}_{unique_id}_chunk_{idx}" for idx in range(chunk_count)]
