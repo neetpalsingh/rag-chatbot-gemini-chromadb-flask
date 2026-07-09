@@ -223,6 +223,6 @@ __marimo__/
 
 skills-lock.json
 
-uploads/
-chroma_db/
+backend/uploads/
+backend/chroma_db/
 *.db
