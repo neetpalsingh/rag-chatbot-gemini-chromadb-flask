@@ -19,13 +19,13 @@ class Config:
     MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
     ALLOWED_EXTENSIONS = {'pdf', 'txt'}
     
-    CHUNK_SIZE_WORDS = 200
-    CHUNK_OVERLAP_WORDS = 50
-    TOP_K_RESULTS = 5
-    
-    GEMINI_EMBED_MODEL = 'models/text-embedding-004'
-    GEMINI_CHAT_MODEL = 'models/gemini-1.5-flash'
-    
+    CHUNK_SIZE_WORDS = int(os.getenv('CHUNK_SIZE_WORDS', '200'))
+    CHUNK_OVERLAP_WORDS = int(os.getenv('CHUNK_OVERLAP_WORDS', '50'))
+    TOP_K_RESULTS = int(os.getenv('TOP_K_RESULTS', '5'))
+
+    GEMINI_EMBED_MODEL = os.getenv('GEMINI_EMBED_MODEL', 'models/text-embedding-004')
+    GEMINI_CHAT_MODEL = os.getenv('GEMINI_CHAT_MODEL', 'models/gemini-1.5-flash')
+
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     
     @staticmethod
