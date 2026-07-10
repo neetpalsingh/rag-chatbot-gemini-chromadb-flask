@@ -1,5 +1,6 @@
 import logging
-from flask import Flask, jsonify
+import os
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from config import Config
 
@@ -31,7 +32,19 @@ def create_app() -> Flask:
     app.register_blueprint(upload_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(health_bp)
-    
+
+    @app.route('/')
+    def index():
+        """Serve the frontend HTML."""
+        frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend')
+        return send_from_directory(frontend_dir, 'chat.html')
+
+    @app.route('/<path:path>')
+    def serve_static(path):
+        """Serve static files (CSS, JS, etc.)."""
+        frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'frontend')
+        return send_from_directory(frontend_dir, path)
+
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({

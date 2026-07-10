@@ -36,46 +36,57 @@ class DocumentIngestionService:
         self.text_reader = TextReader()
         logger.info('Document ingestion service initialized')
     
-    def process_document(self, file_path: Path) -> dict:
+    def process_document(self, file_path: Path, category: str = 'general', collection_name: str = None) -> dict:
         """
         Process a document end-to-end: read, chunk, embed, store.
-        
+
         Args:
             file_path: Path to the uploaded document
-            
+            category: Document category (hr, finance, compliance, legal, general)
+            collection_name: Optional collection name (auto-generated if not provided)
+
         Returns:
-            dict: Processing results with chunk count and filename
+            dict: Processing results with chunk count, filename, and collection name
         """
         try:
+            if collection_name is None:
+                collection_name = self._generate_collection_name(file_path.name)
+
             text = self._read_document(file_path)
-            
+
             chunks, metadatas = self.chunk_service.create_chunks(
                 text=text,
                 filename=file_path.name
             )
-            
+
+            for metadata in metadatas:
+                metadata['category'] = category
+                metadata['collection'] = collection_name
+
             if not chunks:
                 raise ValueError("No chunks created from document")
-            
+
             embeddings = self.embedding_service.generate_batch_embeddings(chunks)
-            
+
             ids = self._generate_chunk_ids(file_path.name, len(chunks))
-            
+
             self.chroma_manager.add_documents(
                 documents=chunks,
                 embeddings=embeddings,
                 metadatas=metadatas,
-                ids=ids
+                ids=ids,
+                collection_name=collection_name
             )
-            
-            logger.info(f'Successfully processed {file_path.name}: {len(chunks)} chunks')
-            
+
+            logger.info(f'Successfully processed {file_path.name}: {len(chunks)} chunks in collection {collection_name}')
+
             return {
                 'filename': file_path.name,
                 'chunks_count': len(chunks),
+                'collection_name': collection_name,
                 'success': True
             }
-            
+
         except Exception as e:
             logger.exception(f'Failed to process document {file_path.name}: {e}')
             raise
@@ -95,3 +106,9 @@ class DocumentIngestionService:
         """Generate unique IDs for chunks."""
         unique_id = str(uuid.uuid4())[:8]
         return [f"{filename}_{unique_id}_chunk_{idx}" for idx in range(chunk_count)]
+
+    def _generate_collection_name(self, filename: str) -> str:
+        """Generate a unique collection name for the document."""
+        clean_name = filename.replace('.', '_').replace(' ', '_')
+        unique_id = str(uuid.uuid4())[:8]
+        return f"doc_{clean_name}_{unique_id}"

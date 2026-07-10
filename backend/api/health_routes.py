@@ -1,12 +1,14 @@
 import logging
 from flask import Blueprint, jsonify
 from database import ChromaManager
+from database.local_db import LocalDatabase
 
 logger = logging.getLogger(__name__)
 
 health_bp = Blueprint('health', __name__, url_prefix='/api')
 
 chroma_manager = ChromaManager()
+local_db = LocalDatabase()
 
 @health_bp.route('/health', methods=['GET'])
 def health_check():
@@ -23,7 +25,7 @@ def get_stats():
     Returns total number of document chunks stored.
     """
     try:
-        count = chroma_manager.get_count()
+        count = local_db.get_total_chunks()
         return jsonify({
             'success': True,
             'data': {
