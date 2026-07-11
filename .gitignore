@@ -218,11 +218,19 @@ __marimo__/
 .streamlit/secrets.toml
 
 
-.md
-*.md
-
 skills-lock.json
+
 
 backend/uploads/
 backend/chroma_db/
+backend/logs/
 *.db
+!backend/data/.gitkeep
+
+.md
+*.md
+.ps1
+*.ps1
+.sh
+*.sh
+
