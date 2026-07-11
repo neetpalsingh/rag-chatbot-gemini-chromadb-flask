@@ -25,6 +25,7 @@ class Config:
 
     GEMINI_EMBED_MODEL = os.getenv('GEMINI_EMBED_MODEL', 'models/text-embedding-004')
     GEMINI_CHAT_MODEL = os.getenv('GEMINI_CHAT_MODEL', 'models/gemini-1.5-flash')
+    EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '3072'))
 
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     

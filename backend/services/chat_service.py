@@ -1,6 +1,7 @@
 import logging
 import google.generativeai as genai
 from config import Config
+from prompts import ChatPrompts
 
 logger = logging.getLogger(__name__)
 
@@ -57,29 +58,12 @@ class ChatService:
     def _build_prompt(self, query: str, context_chunks: list[str]) -> str:
         """
         Build the prompt with context and query.
-        
+
         Args:
             query: User question
             context_chunks: Retrieved context chunks
-            
+
         Returns:
             str: Formatted prompt
         """
-        context = "\n\n".join([
-            f"Context {idx + 1}:\n{chunk}"
-            for idx, chunk in enumerate(context_chunks)
-        ])
-        
-        prompt = f"""You are a helpful AI assistant. Answer the user's question based on the provided context.
-
-If the context doesn't contain relevant information to answer the question, clearly state that you don't have enough information.
-
-Be concise and accurate. Use only the information from the context below.
-
-{context}
-
-Question: {query}
-
-Answer:"""
-        
-        return prompt
+        return ChatPrompts.build_rag_prompt(query, context_chunks)
