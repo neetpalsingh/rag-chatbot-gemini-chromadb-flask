@@ -21,6 +21,14 @@ retrieval_service = RetrievalService(
     chroma_manager=chroma_manager
 )
 
+def _is_greeting_or_general(query: str) -> bool:
+    """Check if query is a greeting or general conversation."""
+    greetings = ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon',
+                 'good evening', 'how are you', 'what can you do', 'who are you',
+                 'what are you', 'help', 'thanks', 'thank you', 'bye', 'goodbye']
+    query_lower = query.lower().strip()
+    return any(greeting in query_lower for greeting in greetings) or len(query.split()) <= 3
+
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
     """
@@ -31,18 +39,31 @@ async def query_documents(request: QueryRequest):
         query = request.query.strip()
         if not query:
             raise HTTPException(status_code=400, detail="Query cannot be empty")
-        
-        retrieval_results = retrieval_service.retrieve_relevant_chunks(query)
-        
-        if not retrieval_results['chunks']:
+
+        if _is_greeting_or_general(query):
+            answer = chat_service.generate_general_response(query)
+            logger.info(f'Handled general query: {query[:50]}...')
             return QueryResponse(
                 success=True,
                 data=QueryData(
-                    answer='No relevant documents found. Please upload documents first.',
+                    answer=answer,
                     sources=[]
                 )
             )
-        
+
+        retrieval_results = retrieval_service.retrieve_relevant_chunks(query)
+
+        if not retrieval_results['chunks']:
+            answer = chat_service.generate_general_response(query)
+            logger.info(f'No documents found, using general response for: {query[:50]}...')
+            return QueryResponse(
+                success=True,
+                data=QueryData(
+                    answer=answer,
+                    sources=[]
+                )
+            )
+
         answer = chat_service.generate_response(
             query=query,
             context_chunks=retrieval_results['chunks']

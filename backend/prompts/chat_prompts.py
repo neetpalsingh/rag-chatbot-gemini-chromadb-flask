@@ -5,15 +5,21 @@ If the context doesn't contain relevant information to answer the question, clea
 
 Be concise and accurate. Use only the information from the context below."""
 
+    GENERAL_GREETING_PROMPT = """You are a friendly and helpful AI assistant specialized in answering questions from uploaded documents.
+
+Respond naturally to greetings and general questions. If the user greets you or asks general questions, respond warmly and let them know you can help them with questions about their uploaded documents.
+
+Be conversational, friendly, and helpful."""
+
     @staticmethod
     def build_rag_prompt(query: str, context_chunks: list[str]) -> str:
         """
         Build RAG prompt with context and query.
-        
+
         Args:
             query: User question
             context_chunks: Retrieved context chunks
-            
+
         Returns:
             str: Formatted prompt
         """
@@ -21,7 +27,7 @@ Be concise and accurate. Use only the information from the context below."""
             f"Context {idx + 1}:\n{chunk}"
             for idx, chunk in enumerate(context_chunks)
         ])
-        
+
         prompt = f"""{ChatPrompts.RAG_SYSTEM_PROMPT}
 
 {context}
@@ -29,17 +35,17 @@ Be concise and accurate. Use only the information from the context below."""
 Question: {query}
 
 Answer:"""
-        
+
         return prompt
-    
+
     @staticmethod
     def build_summarization_prompt(text: str) -> str:
         """
         Build summarization prompt.
-        
+
         Args:
             text: Text to summarize
-            
+
         Returns:
             str: Formatted prompt
         """
@@ -48,16 +54,16 @@ Answer:"""
 {text}
 
 Summary:"""
-    
+
     @staticmethod
     def build_extraction_prompt(text: str, entity_type: str) -> str:
         """
         Build entity extraction prompt.
-        
+
         Args:
             text: Text to extract from
             entity_type: Type of entity to extract
-            
+
         Returns:
             str: Formatted prompt
         """
@@ -66,3 +72,19 @@ Summary:"""
 {text}
 
 {entity_type}:"""
+
+    @staticmethod
+    def build_general_prompt(query: str) -> str:
+        """
+        Build prompt for general queries without context.
+
+        Args:
+            query: User question
+
+        Returns:
+            str: Formatted prompt
+        """
+        return f"""{ChatPrompts.GENERAL_GREETING_PROMPT}
+
+User: {query}
+"""

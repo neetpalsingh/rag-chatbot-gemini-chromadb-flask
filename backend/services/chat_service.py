@@ -55,6 +55,30 @@ class ChatService:
             logger.exception(f'Failed to generate response: {e}')
             raise
     
+    def generate_general_response(self, query: str) -> str:
+        """
+        Generate a response to general queries without context.
+
+        Args:
+            query: User question
+
+        Returns:
+            str: Generated response
+        """
+        try:
+            prompt = ChatPrompts.build_general_prompt(query)
+
+            model = genai.GenerativeModel(self.chat_model)
+            response = model.generate_content(prompt)
+
+            answer = response.text
+            logger.info(f'Generated general response for query: {query[:50]}...')
+            return answer
+
+        except Exception as e:
+            logger.exception(f'Failed to generate general response: {e}')
+            raise
+
     def _build_prompt(self, query: str, context_chunks: list[str]) -> str:
         """
         Build the prompt with context and query.
