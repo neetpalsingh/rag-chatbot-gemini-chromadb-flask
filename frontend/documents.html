@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents - Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">Web Chat</div>
+                <nav class="nav-menu">
+                    <a href="chat.html" class="nav-item">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                    </a>
+                    <a href="documents.html" class="nav-item active">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Documents</span>
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="documents-main">
+            <div class="documents-header">
+                <h1>Document Management</h1>
+                <button class="btn-primary" id="uploadDocBtn">
+                    <i class="fas fa-upload"></i>
+                    Upload Document
+                </button>
+            </div>
+
+            <div class="documents-table-container">
+                <table class="documents-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Chunks</th>
+                            <th>Status</th>
+                            <th>Uploaded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentsTableBody">
+                        <tr class="empty-state">
+                            <td colspan="8">
+                                <i class="fas fa-folder-open"></i>
+                                <p>No documents uploaded yet</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="uploadModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Document</h2>
+                <button class="modal-close" id="modalCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Document Category</label>
+                    <select id="categorySelect" class="form-select">
+                        <option value="hr">HR</option>
+                        <option value="finance">Finance</option>
+                        <option value="compliance">Compliance</option>
+                        <option value="legal">Legal</option>
+                        <option value="general">General</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Select File</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to browse or drag & drop</p>
+                        <span class="file-hint">PDF or TXT (max 10MB)</span>
+                    </div>
+                    <input type="file" id="docFileInput" accept=".pdf,.txt" hidden>
+                    <div id="selectedFileName" class="selected-file"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="cancelUploadBtn">Cancel</button>
+                    <button class="btn-primary" id="confirmUploadBtn" disabled>
+                        <i class="fas fa-upload"></i>
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader" class="loader hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/documents.js"></script>
+</body>
+</html>
