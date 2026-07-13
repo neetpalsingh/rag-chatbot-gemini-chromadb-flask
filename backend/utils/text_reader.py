@@ -4,21 +4,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class TextReader:
-    """
-    Plain text document reader.
-    Reads .txt files.
-    """
-    
     def read_text(self, file_path: Path) -> str:
-        """
-        Read text from .txt file.
-        
-        Args:
-            file_path: Path to text file
-            
-        Returns:
-            str: File content
-        """
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 text = file.read()

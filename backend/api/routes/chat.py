@@ -8,7 +8,7 @@ from services import (
     ChatMemoryService
 )
 from database import ChromaManager
-from models import QueryRequest, QueryResponse, QueryData, SourceInfo
+from models import QueryRequest, QueryResponse, QueryData
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ retrieval_service = RetrievalService(
 memory_service = ChatMemoryService()
 
 def _is_greeting_or_general(query: str) -> bool:
-    """Check if query is a greeting or general conversation."""
+    # Quick check for common greetings and short queries
     greetings = ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon',
                  'good evening', 'how are you', 'what can you do', 'who are you',
                  'what are you', 'help', 'thanks', 'thank you', 'bye', 'goodbye']
@@ -33,10 +33,6 @@ def _is_greeting_or_general(query: str) -> bool:
 
 @router.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
-    """
-    Query endpoint for chatbot with session memory.
-    Retrieves relevant chunks and generates response asynchronously.
-    """
     try:
         query = request.query.strip()
         if not query:
@@ -44,38 +40,54 @@ async def query_documents(request: QueryRequest):
 
         session_id = request.session_id
         if not session_id or not memory_service.session_exists(session_id):
-            session_id = memory_service.create_session()
+            session_id = memory_service.create_session(clear_old=False)
             logger.info(f'Created new session: {session_id}')
 
+        # Limit to last 10 messages to avoid token overflow
         conversation_history = memory_service.get_history(session_id, last_n=10)
 
+        # Handle greetings without document search
         if _is_greeting_or_general(query):
             answer = chat_service.generate_general_response(query, conversation_history)
             memory_service.add_message(session_id, "user", query)
             memory_service.add_message(session_id, "assistant", answer)
             logger.info(f'Handled general query: {query[:50]}...')
+
+            response_metadata = {
+                "used_documents": [],
+                "conversation_history": conversation_history
+            }
+
             return QueryResponse(
                 success=True,
                 data=QueryData(
                     answer=answer,
-                    sources=[],
-                    session_id=session_id
+                    session_id=session_id,
+                    metadata=response_metadata
                 )
             )
 
+        # Search for relevant document chunks
         retrieval_results = retrieval_service.retrieve_relevant_chunks(query)
 
+        # Fall back to general response if no relevant docs found
         if not retrieval_results['chunks']:
             answer = chat_service.generate_general_response(query, conversation_history)
             memory_service.add_message(session_id, "user", query)
             memory_service.add_message(session_id, "assistant", answer)
             logger.info(f'No documents found, using general response for: {query[:50]}...')
+
+            response_metadata = {
+                "used_documents": [],
+                "conversation_history": conversation_history
+            }
+
             return QueryResponse(
                 success=True,
                 data=QueryData(
                     answer=answer,
-                    sources=[],
-                    session_id=session_id
+                    session_id=session_id,
+                    metadata=response_metadata
                 )
             )
 
@@ -87,24 +99,26 @@ async def query_documents(request: QueryRequest):
 
         memory_service.add_message(session_id, "user", query)
         memory_service.add_message(session_id, "assistant", answer)
-        
+
         logger.info(f'Query processed successfully: {query[:50]}...')
-        
-        sources = [
-            SourceInfo(
-                text=source['text'],
-                metadata=source['metadata'],
-                similarity_score=source['similarity_score']
-            )
-            for source in retrieval_results['sources']
-        ]
-        
+
+        # Extract unique document names for metadata
+        used_documents = set()
+        for source in retrieval_results['sources']:
+            if 'filename' in source['metadata']:
+                used_documents.add(source['metadata']['filename'])
+
+        response_metadata = {
+            "used_documents": sorted(list(used_documents)),
+            "conversation_history": conversation_history
+        }
+
         return QueryResponse(
             success=True,
             data=QueryData(
                 answer=answer,
-                sources=sources,
-                session_id=session_id
+                session_id=session_id,
+                metadata=response_metadata
             )
         )
         
@@ -119,13 +133,10 @@ async def query_documents(request: QueryRequest):
 
 @router.post("/session/new")
 async def create_new_session():
-    """
-    Create a new chat session.
-    Used when user refreshes or wants to start fresh.
-    """
     try:
-        session_id = memory_service.create_session()
-        logger.info(f'Created new session: {session_id}')
+        # User clicked "New Chat" - wipe old sessions
+        session_id = memory_service.create_session(clear_old=True)
+        logger.info(f'Created new session with old sessions cleared: {session_id}')
         return {
             "success": True,
             "session_id": session_id,
@@ -140,10 +151,6 @@ async def create_new_session():
 
 @router.delete("/session/{session_id}")
 async def clear_session(session_id: str):
-    """
-    Clear a chat session.
-    Removes all conversation history for the session.
-    """
     try:
         memory_service.clear_session(session_id)
         logger.info(f'Cleared session: {session_id}')

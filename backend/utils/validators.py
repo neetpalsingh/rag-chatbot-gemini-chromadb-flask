@@ -19,22 +19,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class FileValidator:
-    """
-    File upload validation.
-    Validates file type, size, and security.
-    """
-
     @staticmethod
     def validate_file(file) -> tuple[bool, str]:
-        """
-        Validate uploaded file (Flask).
-
-        Args:
-            file: Uploaded file object
-
-        Returns:
-            tuple: (is_valid, error_message)
-        """
         if not file or file.filename == '':
             return False, "No file selected"
 
@@ -46,15 +32,6 @@ class FileValidator:
 
     @staticmethod
     def validate_upload_file(file) -> tuple[bool, str]:
-        """
-        Validate uploaded file (FastAPI).
-
-        Args:
-            file: FastAPI UploadFile object
-
-        Returns:
-            tuple: (is_valid, error_message)
-        """
         if not file or not file.filename:
             return False, "No file selected"
 
@@ -66,21 +43,11 @@ class FileValidator:
     
     @staticmethod
     def _is_allowed_extension(filename: str) -> bool:
-        """Check if file extension is allowed."""
         return '.' in filename and \
                filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
     
     @staticmethod
     def get_secure_filename(filename: str) -> str:
-        """
-        Get secure version of filename.
-
-        Args:
-            filename: Original filename
-
-        Returns:
-            str: Secure filename
-        """
         if HAS_WERKZEUG:
             return werkzeug_secure_filename(filename)
 
@@ -90,15 +57,6 @@ class FileValidator:
     
     @staticmethod
     def validate_file_size(file_path: Path) -> tuple[bool, str]:
-        """
-        Validate file size.
-        
-        Args:
-            file_path: Path to file
-            
-        Returns:
-            tuple: (is_valid, error_message)
-        """
         file_size = file_path.stat().st_size
         
         if file_size > Config.MAX_FILE_SIZE_BYTES:

@@ -14,7 +14,6 @@ local_db = LocalDatabase()
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint."""
     return HealthResponse(
         success=True,
         message="Service is running"
@@ -22,10 +21,6 @@ async def health_check():
 
 @router.get("/stats", response_model=StatsResponse)
 async def get_stats():
-    """
-    Get database statistics.
-    Returns total number of document chunks stored.
-    """
     try:
         count = local_db.get_total_chunks()
         return StatsResponse(

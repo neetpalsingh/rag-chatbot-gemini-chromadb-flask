@@ -40,10 +40,6 @@ async def upload_document(
     file: UploadFile = File(...),
     category: str = Form(default="general")
 ):
-    """
-    Upload and process document endpoint.
-    Validates file, processes it asynchronously, and stores embeddings.
-    """
     try:
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
@@ -105,7 +101,6 @@ async def upload_document(
 
 @router.get("/documents", response_model=DocumentsResponse)
 async def get_documents():
-    """Get all documents from local database asynchronously."""
     try:
         documents = local_db.get_all_documents()
         doc_list = [Document(**doc) for doc in documents]
@@ -116,7 +111,6 @@ async def get_documents():
 
 @router.delete("/documents/{doc_id}", response_model=DeleteResponse)
 async def delete_document(doc_id: str):
-    """Delete document from both local DB and ChromaDB asynchronously."""
     try:
         document = local_db.get_document_by_id(doc_id)
         if not document:

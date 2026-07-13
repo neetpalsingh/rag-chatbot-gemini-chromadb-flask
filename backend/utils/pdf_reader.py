@@ -5,21 +5,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class PDFReader:
-    """
-    PDF document reader.
-    Extracts text from PDF files.
-    """
-    
     def read_pdf(self, file_path: Path) -> str:
-        """
-        Extract text from PDF file.
-        
-        Args:
-            file_path: Path to PDF file
-            
-        Returns:
-            str: Extracted text content
-        """
         try:
             text = ""
             with open(file_path, 'rb') as file:

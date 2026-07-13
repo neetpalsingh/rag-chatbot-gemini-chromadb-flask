@@ -9,7 +9,7 @@ class Config:
     
     BASE_DIR = Path(__file__).parent
     
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'd6ce7d88fb06504d6508a553cf7eeeb0eb3b2edd1224f2752e920d7ea0b51c68')
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     
     UPLOAD_FOLDER = BASE_DIR / 'uploads'

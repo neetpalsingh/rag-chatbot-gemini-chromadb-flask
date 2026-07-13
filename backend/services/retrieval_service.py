@@ -8,25 +8,12 @@ from config import Config
 logger = logging.getLogger(__name__)
 
 class RetrievalService:
-    """
-    Service for retrieving relevant document chunks.
-    Handles query embedding and vector search.
-    """
-
     def __init__(
         self,
         embedding_service: GeminiEmbeddingService,
         chroma_manager: ChromaManager,
         local_db: Optional[LocalDatabase] = None
     ):
-        """
-        Initialize retrieval service with dependencies.
-
-        Args:
-            embedding_service: Service for generating embeddings
-            chroma_manager: ChromaDB manager
-            local_db: Optional local database for metadata
-        """
         self.embedding_service = embedding_service
         self.chroma_manager = chroma_manager
         self.local_db = local_db or LocalDatabase()
@@ -38,28 +25,20 @@ class RetrievalService:
         top_k: int = None,
         category_filter: Optional[str] = None
     ) -> dict:
-        """
-        Retrieve top-K relevant chunks for a query with optional filtering.
-
-        Args:
-            query: User query text
-            top_k: Number of chunks to retrieve
-            category_filter: Optional category to filter by (hr, finance, etc.)
-
-        Returns:
-            dict: Retrieved chunks with metadata and similarity scores
-        """
         try:
             top_k = top_k or Config.TOP_K_RESULTS
 
+            # Get all available collections
             collection_names = self.local_db.get_all_collection_names()
 
+            # Convert query to embedding
             query_embedding = self.embedding_service.generate_query_embedding(query)
 
             metadata_filter = None
             if category_filter:
                 metadata_filter = {'category': category_filter}
 
+            # Search across all collections
             search_results = self.chroma_manager.similarity_search(
                 query_embedding=query_embedding,
                 top_k=top_k,
@@ -67,13 +46,14 @@ class RetrievalService:
                 metadata_filter=metadata_filter
             )
 
+            # Format results for chat service
             formatted_results = {
                 'chunks': search_results['documents'],
                 'sources': [
                     {
                         'text': doc,
                         'metadata': meta,
-                        'similarity_score': 1 - dist
+                        'similarity_score': 1 - dist  # Convert distance to similarity
                     }
                     for doc, meta, dist in zip(
                         search_results['documents'],

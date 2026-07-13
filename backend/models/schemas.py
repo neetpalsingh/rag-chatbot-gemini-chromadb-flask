@@ -12,8 +12,8 @@ class SourceInfo(BaseModel):
 
 class QueryData(BaseModel):
     answer: str
-    sources: List[SourceInfo]
     session_id: str
+    metadata: Optional[Dict[str, Any]] = None
 
 class QueryResponse(BaseModel):
     success: bool
