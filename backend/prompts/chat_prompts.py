@@ -12,13 +12,14 @@ Respond naturally to greetings and general questions. If the user greets you or 
 Be conversational, friendly, and helpful."""
 
     @staticmethod
-    def build_rag_prompt(query: str, context_chunks: list[str]) -> str:
+    def build_rag_prompt(query: str, context_chunks: list[str], conversation_history: list[dict] = None) -> str:
         """
         Build RAG prompt with context and query.
 
         Args:
             query: User question
             context_chunks: Retrieved context chunks
+            conversation_history: Previous conversation messages
 
         Returns:
             str: Formatted prompt
@@ -28,9 +29,16 @@ Be conversational, friendly, and helpful."""
             for idx, chunk in enumerate(context_chunks)
         ])
 
+        history_text = ""
+        if conversation_history:
+            history_text = "\n\nConversation History:\n"
+            for msg in conversation_history:
+                role = "User" if msg["role"] == "user" else "Assistant"
+                history_text += f"{role}: {msg['content']}\n"
+
         prompt = f"""{ChatPrompts.RAG_SYSTEM_PROMPT}
 
-{context}
+{context}{history_text}
 
 Question: {query}
 
@@ -74,17 +82,25 @@ Summary:"""
 {entity_type}:"""
 
     @staticmethod
-    def build_general_prompt(query: str) -> str:
+    def build_general_prompt(query: str, conversation_history: list[dict] = None) -> str:
         """
         Build prompt for general queries without context.
 
         Args:
             query: User question
+            conversation_history: Previous conversation messages
 
         Returns:
             str: Formatted prompt
         """
-        return f"""{ChatPrompts.GENERAL_GREETING_PROMPT}
+        history_text = ""
+        if conversation_history:
+            history_text = "\n\nConversation History:\n"
+            for msg in conversation_history:
+                role = "User" if msg["role"] == "user" else "Assistant"
+                history_text += f"{role}: {msg['content']}\n"
+
+        return f"""{ChatPrompts.GENERAL_GREETING_PROMPT}{history_text}
 
 User: {query}
 """

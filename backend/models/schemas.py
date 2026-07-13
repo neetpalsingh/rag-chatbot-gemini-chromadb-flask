@@ -1,8 +1,9 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User query text")
+    session_id: Optional[str] = Field(None, description="Chat session ID")
 
 class SourceInfo(BaseModel):
     text: str
@@ -12,6 +13,7 @@ class SourceInfo(BaseModel):
 class QueryData(BaseModel):
     answer: str
     sources: List[SourceInfo]
+    session_id: str
 
 class QueryResponse(BaseModel):
     success: bool
