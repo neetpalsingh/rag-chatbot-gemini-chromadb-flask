@@ -25,6 +25,11 @@ class GeminiEmbeddingService:
             )
             return result['embedding']
         except Exception as e:
+            error_msg = str(e)
+            # Handle rate limit errors
+            if '429' in error_msg or 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                logger.error(f'Gemini API rate limit exceeded: {e}')
+                raise ValueError('API rate limit exceeded. Please try again in a moment.')
             logger.exception(f'Failed to generate document embedding: {e}')
             raise
     
@@ -39,6 +44,11 @@ class GeminiEmbeddingService:
             logger.info(f'Generated query embedding for: {query[:50]}...')
             return result['embedding']
         except Exception as e:
+            error_msg = str(e)
+            # Handle rate limit errors
+            if '429' in error_msg or 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                logger.error(f'Gemini API rate limit exceeded: {e}')
+                raise ValueError('API rate limit exceeded. Please try again in a moment.')
             logger.exception(f'Failed to generate query embedding: {e}')
             raise
     

@@ -93,11 +93,14 @@ async def upload_document(
     except HTTPException:
         raise
     except ValueError as e:
-        logger.error(f'Validation error: {e}')
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        logger.error(f'Validation error: {error_msg}')
+        # Return 429 for rate limit errors, 400 for others
+        status_code = 429 if 'rate limit' in error_msg.lower() else 400
+        raise HTTPException(status_code=status_code, detail=error_msg)
     except Exception as e:
         logger.exception(f'Upload failed: {e}')
-        raise HTTPException(status_code=500, detail="Failed to process document")
+        raise HTTPException(status_code=500, detail=f"Failed to process document: {str(e)}")
 
 @router.get("/documents", response_model=DocumentsResponse)
 async def get_documents():
