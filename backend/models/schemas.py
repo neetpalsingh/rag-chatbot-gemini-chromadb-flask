@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User query text")
     session_id: Optional[str] = Field(None, description="Chat session ID")
+    top_k: Optional[int] = Field(5, ge=1, le=20, description="Number of chunks to retrieve")
+    temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0, description="LLM temperature")
+    top_p: Optional[float] = Field(0.95, ge=0.0, le=1.0, description="LLM top-p sampling")
 
 class SourceInfo(BaseModel):
     text: str
