@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Chat - AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">Web Chat</div>
+                <nav class="nav-menu">
+                    <a href="chat.html" class="nav-item active">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                    </a>
+                    <a href="documents.html" class="nav-item">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Documents</span>
+                    </a>
+                    <button id="settingsBtn" class="nav-item settings-btn" title="LLM Settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                    <button id="newChatBtn" class="nav-item new-chat-btn" title="Start new chat">
+                        <i class="fas fa-plus"></i>
+                        <span>New Chat</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="chat-main">
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-message">
+                    <i class="fas fa-robot"></i>
+                    <h2>Welcome to Web Chat</h2>
+                    <p>Upload documents and start asking questions!</p>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <button class="attach-btn" id="attachBtn" title="Attach file">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input
+                    type="text"
+                    id="messageInput"
+                    class="message-input"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                >
+                <button class="send-btn" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <input type="file" id="fileInput" accept=".pdf,.txt" hidden>
+
+    <div id="loader" class="loader hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>LLM Settings</h3>
+                <button class="close-btn" id="closeSettingsBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="topKSlider">
+                        Top K (Retrieval)
+                        <span class="setting-info" title="Number of document chunks to retrieve">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <div class="slider-container">
+                        <input type="range" id="topKSlider" min="1" max="20" value="5" step="1">
+                        <span class="slider-value" id="topKValue">5</span>
+                    </div>
+                    <small>Retrieve 1-20 most relevant document chunks</small>
+                </div>
+
+                <div class="setting-group">
+                    <label for="temperatureSlider">
+                        Temperature
+                        <span class="setting-info" title="Controls randomness in responses">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <div class="slider-container">
+                        <input type="range" id="temperatureSlider" min="0" max="2" value="0.7" step="0.1">
+                        <span class="slider-value" id="temperatureValue">0.7</span>
+                    </div>
+                    <small>Lower = Focused, Higher = Creative (0.0 - 2.0)</small>
+                </div>
+
+                <div class="setting-group">
+                    <label for="topPSlider">
+                        Top P (Nucleus Sampling)
+                        <span class="setting-info" title="Controls diversity of responses">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <div class="slider-container">
+                        <input type="range" id="topPSlider" min="0" max="1" value="0.95" step="0.05">
+                        <span class="slider-value" id="topPValue">0.95</span>
+                    </div>
+                    <small>Lower = Deterministic, Higher = Diverse (0.0 - 1.0)</small>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-reset" id="resetSettingsBtn">
+                        <i class="fas fa-undo"></i> Reset to Default
+                    </button>
+                    <button class="btn-save" id="saveSettingsBtn">
+                        <i class="fas fa-check"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>
